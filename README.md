@@ -42,9 +42,9 @@ The code of this repository is licensed under [GPL-3.0](https://www.gnu.org/lice
 
 If you agree to the above license, please download checkpoints from the following link and put them in the ``checkpoints`` folder.
 
-Carsidock：[google drive](https://drive.google.com/file/d/1OweBn07R4bpoC0gETezKrOoK7xYreO4O/view?usp=drive_link)/[飞书](https://szuy1h04n8.feishu.cn/file/C3uqbkc6UoNI6kxsw2Ycg8cOnnf?from=from_copylink) 
+Carsidock: [GoogleDrive](https://drive.google.com/file/d/1OweBn07R4bpoC0gETezKrOoK7xYreO4O/view?usp=drive_link)/[飞书](https://szuy1h04n8.feishu.cn/file/C3uqbkc6UoNI6kxsw2Ycg8cOnnf?from=from_copylink) 
 
-RTMScore: [github](https://github.com/sc8668/RTMScore/raw/main/trained_models/rtmscore_model1.pth)
+RTMScore: [GitHub](https://github.com/sc8668/RTMScore/raw/main/trained_models/rtmscore_model1.pth)
 
 ## Copyright
 [CarbonSilicon.AI](https://carbonsilicon.ai/) All rights reserved.
