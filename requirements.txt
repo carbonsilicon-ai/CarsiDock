@@ -1,0 +1,8 @@
+rdkit==2022.9.4
+ProDy==2.4.0
+wandb==0.13.2
+omegaconf==2.2.3
+pytorch-lightning==1.7.3
+transformers==4.15.0
+spyrmsd==0.5.2
+pytest
