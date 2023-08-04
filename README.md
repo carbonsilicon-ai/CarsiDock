@@ -36,7 +36,7 @@ docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_screening.
 
 
 ## License
-The code of this repository is licensed under [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html). The use of the CarsiDock model weights is subject to the [Model License](./MODEL_LICENSE.txt). CarsiDock weights are completely open for academic research, please contact [bd@carbonsilicon.ai](bd@carbonsilicon.ai) for commercial use. 
+The code of this repository is licensed under [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html). The use of the CarsiDock model weights is subject to the [Model License](./MODEL_LICENSE.txt). CarsiDock weights are completely open for academic research, please contact <bd@carbonsilicon.ai> for commercial use. 
 
 ## Checkpoints
 
