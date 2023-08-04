@@ -9,7 +9,7 @@ We tested the code in the following docker environment on Tesla A100 GPU machine
 docker build -f DockerFile -t carsidock:v1 .
 ```
 
-## Evaluation in PDBBind Core Set.
+## Evaluation on PDBBind Core Set.
 ```shell
 docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_core_set_eval.py --cuda_convert
 ```
