@@ -1,3 +1,7 @@
+"""
+
+"""
+
 from typing import Optional
 import torch.nn.functional as F
 import torch
@@ -8,8 +12,7 @@ from src.layers.openfold.modeling_evoformer import TriAtten
 from src.layers.modeling_layers import TransformerEncoderLayer
 import torch.nn as nn
 
-from src.modeling.modeling_base_model import BaseModel, BetaConfig, BaseForDockingPose, BaseForPretraining, \
-    NonLinearHead
+from src.modeling.modeling_base_model import BaseModel, BetaConfig, BaseForDockingPose, NonLinearHead
 
 
 class TransformerEncoderWithTriangle(nn.Module):
