@@ -32,7 +32,7 @@ def set_coord(mol, coords):
     return _mol
 
 
-def prepare_data_from_mol(mol_list, dictionary, prefix='mol', max_atoms=384, device='cuda', center_mode=False):
+def prepare_data_from_mol(mol_list, dictionary, prefix='mol', max_atoms=384, device='cuda'):
     atoms = [a.GetSymbol().upper() for a in mol_list[0].GetAtoms()]
     atoms = [a if '[' not in a else a[1] for a in atoms]
     indices = np.array(atoms) != 'H'
@@ -46,13 +46,9 @@ def prepare_data_from_mol(mol_list, dictionary, prefix='mol', max_atoms=384, dev
     ori_coordinates = torch.from_numpy(np.array([mol.GetConformer().GetPositions()[indices] for mol in mol_list]))
     coordinates = ori_coordinates.clone()
     bsz, sz = coordinates.shape[:2]
-    if center_mode:
-        center = coordinates.mean(dim=1).unsqueeze(1)
-        coordinates = torch.cat([center, coordinates, center], dim=1)
-        distance = (coordinates.unsqueeze(2) - coordinates.unsqueeze(1)).norm(dim=-1)
-    else:
-        distance = torch.zeros(bsz, sz + 2, sz + 2)
-        distance[:, 1:-1, 1:-1] = (coordinates.unsqueeze(2) - coordinates.unsqueeze(1)).norm(dim=-1)
+    center = coordinates.mean(dim=1).unsqueeze(1)
+    coordinates = torch.cat([center, coordinates, center], dim=1)
+    distance = (coordinates.unsqueeze(2) - coordinates.unsqueeze(1)).norm(dim=-1)
     # sos & eos
     tokens = torch.cat([torch.full((1,), dictionary.bos()), tokens, torch.full((1,), dictionary.eos())], dim=0)
     # coordinates = torch.cat([torch.full((1, 3), 0.0), coordinates, torch.full((1, 3), 0.0)], dim=0)
@@ -232,14 +228,13 @@ class MultiProcess:
         return mol_list
 
 
-def convert_dist2coord(infer_output, ligands: List, target_mol=None, output_path=None, one_step=True, num_threads=24,
-                       lbfgsbsrv=None):
+def convert_dist2coord(infer_output, ligands: List, target_mol=None, output_path=None, num_threads=1, lbfgsbsrv=None):
     mp = MultiProcess(mol=ligands[0], **infer_output)
     args = [(ic, pcd, phd) for ic in infer_output['ligands_coords'] for pcd, phd in
             zip(infer_output['distance_predict_tta'], infer_output['holo_distance_predict_tta'])]
     if lbfgsbsrv is not None:
         mol_list = mp.dist_to_coords_with_tor_culbfgsb(lbfgsbsrv, args)
-    elif one_step:
+    else:
         if num_threads == -1:
             mol_list = [mp.dist_to_coords_with_tor_cuda(*arg) for arg in args]
         elif num_threads > 1:
@@ -247,14 +242,8 @@ def convert_dist2coord(infer_output, ligands: List, target_mol=None, output_path
                 mol_list = pool.starmap(mp.dist_to_coords_with_tor, args)
         else:
             mol_list = [mp.dist_to_coords_with_tor(*arg) for arg in args]
-    else:
-        if num_threads > 1:
-            with Pool(num_threads) as pool:
-                mol_list = pool.starmap(mp.dist_to_coords, args)
-        else:
-            mol_list = [mp.dist_to_coords(*arg) for arg in args]
 
-    mol_list = sorted([m for m in mol_list if m is not None], key=lambda x: 5 * x[1] - x[2])
+    mol_list = sorted([m for m in mol_list if m is not None], key=lambda x: 5 * x[1] - 1 * x[2])[:-2]
     rdkit_mol_list = [item[0] for item in mol_list]
 
     rmsd = None
@@ -264,7 +253,7 @@ def convert_dist2coord(infer_output, ligands: List, target_mol=None, output_path
         try:
             rmsd = get_symmetry_rmsd(target_mol, target_coords, pred_coords, rdkit_mol_list[0])
         except:
-            print("rmsd 计算失败。")
+            print("fail to compute rmsd")
 
     rdkit_mol_list = [Chem.rdmolops.AddHs(mol, addCoords=True) for mol in rdkit_mol_list]
     if output_path is not None:
@@ -290,7 +279,6 @@ def mdn_score(pi, mu, sigma, predict_coords=None, pocket_coords=None, dist=None,
         score = prob[dist_mask].sum() / dist.shape[0]
         # score = prob[dist_mask].sum()
     conf_mask = dist < 1.5
-    print(dist.min())
     if conf_mask.sum() > 0:
         score += torch.log(dist[conf_mask] / 1.5).sum() * 10
     return score
@@ -316,11 +304,13 @@ def mdn_score_list(pi, mu, sigma, dist=None, threshold=5, reduction='sum'):
 
 def read_ligands(mol_list=None, smiles=None, num_gen_conf=100, num_use_conf=5):
     """
-    读取小分子，如为smiles则生成构象
+    read ligands, generate conformer if smiles is provided.
     """
     if mol_list is None:
         assert smiles is not None
         mol_list = [Chem.MolFromSmiles(smi) for smi in smiles]
+        for mol in mol_list:
+            mol.SetProp('_Name', Chem.MolToInchiKey(mol))
     # print(Chem.MolToInchiKey(mol_list[0]))
     mol_list = [Chem.RemoveAllHs(mol) for mol in mol_list if mol is not None]
     total_coords = [clustering2(mol, num_gen_conf, num_use_conf) for mol in mol_list]
@@ -329,24 +319,22 @@ def read_ligands(mol_list=None, smiles=None, num_gen_conf=100, num_use_conf=5):
 
 
 @torch.no_grad()
-def model_inference(model, pocket, ligands: List, ligand_dict, pocket_dict, device='cuda', bsz=8, center_mode=False):
+def model_inference(model, pocket, ligands: List, ligand_dict, pocket_dict, device='cuda', bsz=8):
     model.eval()
     ligand_nums = len(ligands)
     # print('prepare data...')
     l_data, p_data = [], []
     for i in range(int(math.ceil(ligand_nums / bsz))):
         l_data.append(
-            prepare_data_from_mol(ligands[i * bsz:(i + 1) * bsz], ligand_dict, device=device, center_mode=center_mode))
+            prepare_data_from_mol(ligands[i * bsz:(i + 1) * bsz], ligand_dict, device=device))
         length = len(ligands[i * bsz:(i + 1) * bsz])
-        p_data.append(prepare_data_from_mol([pocket for _ in range(length)], pocket_dict, 'pocket', device=device,
-                                            center_mode=center_mode))
+        p_data.append(prepare_data_from_mol([pocket for _ in range(length)], pocket_dict, 'pocket', device=device))
     # print('inference distance matrix...')
     with torch.no_grad():
         outputs = [model(**pocket_data[0], **ligand_data[0]) for pocket_data, ligand_data in zip(p_data, l_data)]
         pocket_coords = p_data[0][1][0]
         ligands_coords = torch.cat([l[1] for l in l_data], dim=0)
 
-        affinity = torch.cat([output.affinity_predict for output in outputs], dim=0).mean(dim=0).cpu().data.numpy()
         pocket_center = pocket_coords.mean(dim=0)
         pocket_coords = pocket_coords - pocket_center
         ligands_coords = ligands_coords - ligands_coords.mean(dim=1, keepdim=True)
@@ -358,8 +346,6 @@ def model_inference(model, pocket, ligands: List, ligand_dict, pocket_dict, devi
         mean_cross_dist = torch.mean(distance_predict_tta, dim=0)
         score = mdn_score(pi, mu, sigma, dist=mean_cross_dist).item()
 
-        # 后续操作均使用cpu计算
-        affinity = np.power(10, -affinity) * 1e6
         distance_predict_tta = distance_predict_tta.cpu()
         holo_distance_predict_tta = holo_distance_predict_tta.cpu()
         pi, mu, sigma = pi.cpu(), mu.cpu(), sigma.cpu()
@@ -368,7 +354,6 @@ def model_inference(model, pocket, ligands: List, ligand_dict, pocket_dict, devi
         pocket_center = pocket_center.cpu()
 
         inference_output = {
-            'affinity': affinity,
             'score': score,
             'distance_predict_tta': distance_predict_tta,
             'holo_distance_predict_tta': holo_distance_predict_tta,
@@ -416,52 +401,32 @@ def scoring(model, pocket, init_ligands, ligand_dict, pocket_dict, docked_ligand
     return scores
 
 
-def docking(model, pocket, ligands: List, ligand_dict, pocket_dict, dock=True,
-            output_path=None, target_mol=None, one_step=True, device='cuda', num_threads=24, bsz=8, center_mode=False,
+def docking(model, pocket, ligands: List, ligand_dict, pocket_dict,
+            output_path=None, target_mol=None, device='cuda', num_threads=1, bsz=8,
             lbfgsbsrv=None):
     """
-    model: 用于推理的模型
-    pocket: rdkit的口袋 mol 对象
-    ligands: list[rdkit mol], 每个mol对象均有不同的初始构象，强烈建议列表长度大于等于5
-    ligand_dict: 小分子token字典
-    pocket_dict: 口袋token字典
-    dock: 是否进行对接
-    output_path：对接构象输出路径，如不指定则不输出小分子构象
-    target_mol: 带ground truth构象的小分子mol对象，如给定则打印每个构象的rmsd
-    one_step：距离矩阵转坐标是否仅通过一步进行，设为True时更快，设为False时更准。
-    device: 在进行模型推理时使用的设备。（距离矩阵转坐标阶段仅支持cpu）
-    num_threads: 在距离矩阵转坐标阶段的进程池中进程的数量, -1表示使用cuda kernel计算。
-    bsz: 模型进行inference时的batch size
-    center_mode: 补充蛋白和小分子构象中心作为sos/eos的坐标，默认为false，0408及往后的模型需置为True
+    model: carsidock model
+    pocket: rdkit mol
+    ligands: list[rdkit mol], initial ligand conformer, recommend len(ligands) > 5.
+    ligand_dict:  ligand token dictionary.
+    pocket_dict: pocket token dictionary.
+    output_path：where ligand conformers to save if is not none.
+    target_mol: ground truth ligand conformer, we will use this to compute rmsd if provided.
+    device: recommend 'cuda'.
+    num_threads: recommend 1.
+    bsz: batch size when model inference.
+    lbfgsbsrv: pydock runtime.
     """
-    assert len(ligands) > 0, "初始构象个数至少为1"
-    assert bsz > 0, "batch size 至少为1"
-    start_time = time.time()
-    infer_output = model_inference(model, pocket, ligands, ligand_dict, pocket_dict, device=device, bsz=bsz,
-                                   center_mode=center_mode)
-    infer_end_time = time.time()
-
-    convert_start_time = time.time()
-    if dock:
-        print('convert distance matrix to coordinates...')
-        mol_list, rdkit_mol_list, rmsd = convert_dist2coord(infer_output, ligands, target_mol, output_path, one_step,
-                                                            num_threads, lbfgsbsrv=lbfgsbsrv)
-    else:
-        mol_list, rdkit_mol_list, rmsd = [], [], []
-    end_time = time.time()
+    assert len(ligands) > 0, "initial ligand conformer must be more than 0"
+    assert bsz > 0, "batch size must be more than 0"
+    infer_output = model_inference(model, pocket, ligands, ligand_dict, pocket_dict, device=device, bsz=bsz)
+    mol_list, rdkit_mol_list, rmsd = convert_dist2coord(infer_output, ligands, target_mol, output_path,
+                                                        num_threads, lbfgsbsrv=lbfgsbsrv)
 
     rst = dict()
-    rst['screening_score'] = infer_output['score']
     rst['mol_list'] = rdkit_mol_list
     rst['conf_ranking_score'] = [5 * item[1] - item[2] for item in mol_list]
     rst['conf_convert_loss'] = [item[1] for item in mol_list]
-    rst['conf_mdn_score'] = [item[2] for item in mol_list]
-    rst['affinity'] = {'ki': infer_output['affinity'][0],
-                       'kd': infer_output['affinity'][1],
-                       'ic50': infer_output['affinity'][2]}
-    rst['infer_time'] = infer_end_time - start_time
-    rst['convert_time'] = end_time - convert_start_time
-    rst['total_time'] = end_time - start_time
     rst['rmsd'] = rmsd
     rst['smiles'] = Chem.MolToSmiles(ligands[0])
     return rst

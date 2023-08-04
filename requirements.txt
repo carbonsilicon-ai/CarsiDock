@@ -5,4 +5,12 @@ omegaconf==2.2.3
 pytorch-lightning==1.7.3
 transformers==4.15.0
 spyrmsd==0.5.2
+seaborn==0.11.2
+mdanalysis==2.0.0
+joblib==1.0.1
+matplotlib==3.4.3
+torchmetrics==0.11.4
+numpy==1.22.0
+torch-scatter
+func_timeout
 pytest

@@ -5,13 +5,9 @@ import argparse
 import os
 import multiprocessing as mp
 import torch
-from rdkit import Chem
-from src.data.dictionary import Dictionary
-from src.modeling.modeling_foldock2 import FoldDockingForPredict
-from src.modeling.modeling_base_model import BetaConfig
 from src.utils.docking_inference_utils import docking, read_ligands
-from src.utils.docking_utils import extract_pocket, read_pocket
-from src.utils.utils import get_abs_path
+from src.utils.docking_utils import extract_carsidock_pocket, read_pocket
+from src.utils.utils import get_abs_path, get_carsidock_model
 
 DEVICE = torch.device('cuda')
 
@@ -25,34 +21,18 @@ def main(args):
     else:
         lbfgsbsrv = None
 
-    ligand_dict = Dictionary.load(get_abs_path('example_data/molecule/dict.txt'))
-    pocket_dict = Dictionary.load(get_abs_path('example_data/pocket/dict.txt'))
-    model_config = BetaConfig(num_hidden_layers=6,
-                              recycling=3,
-                              hidden_size=768,
-                              num_attention_heads=16,
-                              mol_config=BetaConfig(num_hidden_layers=6,
-                                                    vocab_size=len(ligand_dict) + 1,
-                                                    hidden_size=768,
-                                                    num_attention_heads=16),
-                              pocket_config=BetaConfig(num_hidden_layers=6,
-                                                       vocab_size=len(pocket_dict) + 1,
-                                                       hidden_size=768,
-                                                       num_attention_heads=16))
-    model = FoldDockingForPredict(model_config).to(DEVICE)
-    model.load_state_dict(torch.load(get_abs_path(args.ckpt_path))['state_dict'], strict=False)
-    model.eval()
+    model, ligand_dict, pocket_dict = get_carsidock_model(args.ckpt_path, DEVICE)
 
     print('read data...')
     if args.sdf_file is None:
         pocket = read_pocket(get_abs_path(args.pdb_file))
         ligand = None
     else:
-        pocket, ligand = extract_pocket(get_abs_path(args.pdb_file),
-                                        get_abs_path(args.sdf_file))
+        pocket, ligand = extract_carsidock_pocket(get_abs_path(args.pdb_file),
+                                                  get_abs_path(args.sdf_file))
 
     if args.smiles_file is not None:
-        with open(args.smiles_file, 'r') as f:
+        with open(get_abs_path(args.smiles_file), 'r') as f:
             smiles = [s.strip() for s in f.readlines()]
         all_mol_list = read_ligands(smiles=smiles, num_use_conf=args.num_conformer)
     elif ligand is not None:
@@ -83,8 +63,9 @@ if __name__ == '__main__':
     parser.add_argument('--smiles_file', default=None,
                         help='smiles file to docking, txt file with One smiles per line. You dont need to provide it when redocking.')
     parser.add_argument('--output_dir', default='outputs/conformer')
-    parser.add_argument('--num_conformer', default=5, help='number of initial conformer, resulting in num_conformer * num_conformer docking conformations.')
-    parser.add_argument('--ckpt_path', default='checkpoints/0409-v1-best-val.ckpt')
+    parser.add_argument('--num_conformer', default=5,
+                        help='number of initial conformer, resulting in num_conformer * num_conformer docking conformations.')
+    parser.add_argument('--ckpt_path', default='checkpoints/carsidock_230731.ckpt')
     parser.add_argument('--num_threads', default=1, help='recommend 1')
     parser.add_argument('--cuda_convert', action='store_true',
                         help='use cuda to accelerate distance matrix to coordinate.')

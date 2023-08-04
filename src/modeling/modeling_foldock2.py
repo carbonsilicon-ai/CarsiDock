@@ -12,7 +12,7 @@ from src.modeling.modeling_base_model import BaseModel, BetaConfig, BaseForDocki
     NonLinearHead
 
 
-class TransformerEncoderWithEvo(nn.Module):
+class TransformerEncoderWithTriangle(nn.Module):
     def __init__(
             self,
             encoder_layers: int = 6,
@@ -179,7 +179,7 @@ class TransformerEncoderWithEvo(nn.Module):
 class FoldModel(BaseModel):
     def __init__(self, config: BetaConfig):
         super().__init__(config)
-        self.encoder = TransformerEncoderWithEvo(
+        self.encoder = TransformerEncoderWithTriangle(
             encoder_layers=config.num_hidden_layers,
             embed_dim=config.hidden_size,
             ffn_embed_dim=config.intermediate_size,
@@ -311,137 +311,6 @@ class FoldForDockingPose(BaseForDockingPose):
         loss = distance_loss + holo_distance_loss
         return DockingPoseOutput(
             loss=loss,
-            cross_loss=distance_loss,
-            holo_loss=holo_distance_loss,
-            cross_distance_predict=cross_distance_predict,
-            holo_distance_predict=holo_distance_predict
-        )
-
-
-class FoldForPhyDockingPretrain(BaseForDockingPose):
-    def __init__(self, config: BetaConfig):
-        super(FoldForPhyDockingPretrain, self).__init__(config)
-        self.mol_model = FoldModel(config.mol_config)
-        self.pocket_model = FoldModel(config.pocket_config)
-        self.concat_encoder = FoldModel(config)
-        self.regression_head = NonLinearHead(2 * config.hidden_size + config.num_attention_heads, 1, 'gelu')
-
-    @staticmethod
-    def distance(m, n):
-        _m = torch.mean(m, dim=2, keepdim=True)
-        _n = torch.mean(n, dim=1, keepdim=True)
-        return _m - _n
-
-    def forward(
-            self,
-            mol_src_tokens,
-            mol_src_distance,
-            mol_src_edge_type,
-            pocket_src_tokens,
-            pocket_src_distance,
-            pocket_src_edge_type,
-            masked_tokens=None,
-            distance_target=None,
-            holo_distance_target=None,
-            dist_threshold=0,
-            score=None,
-            **kwargs
-    ):
-        mol_padding_mask = mol_src_tokens.eq(0)
-        pocket_padding_mask = pocket_src_tokens.eq(0)
-
-        mol_outputs = self.mol_model(src_tokens=mol_src_tokens, src_distance=mol_src_distance,
-                                     src_edge_type=mol_src_edge_type)
-        mol_encoder_rep = mol_outputs.last_hidden_state
-        mol_encoder_pair_rep = mol_outputs.last_pair_repr
-
-        pocket_outputs = self.pocket_model(src_tokens=pocket_src_tokens, src_distance=pocket_src_distance,
-                                           src_edge_type=pocket_src_edge_type)
-        pocket_encoder_rep = pocket_outputs.last_hidden_state
-        pocket_encoder_pair_rep = pocket_outputs.last_pair_repr
-
-        bsz, mol_sz = mol_encoder_rep.shape[:2]
-        pocket_sz = pocket_encoder_rep.size(1)
-
-        concat_rep = torch.cat(
-            [mol_encoder_rep, pocket_encoder_rep], dim=-2
-        )  # [batch, mol_sz+pocket_sz, hidden_dim]
-        concat_mask = torch.cat(
-            [mol_padding_mask, pocket_padding_mask], dim=-1
-        )  # [batch, mol_sz+pocket_sz]
-
-        concat_pair_rep = torch.zeros(bsz, mol_sz + pocket_sz, mol_sz + pocket_sz, self.config.num_attention_heads,
-                                      device=mol_src_tokens.device)
-        concat_pair_rep[:, :mol_sz, :mol_sz] += mol_encoder_pair_rep
-        concat_pair_rep[:, mol_sz:, mol_sz:] += pocket_encoder_pair_rep
-        concat_pair_rep[:, :mol_sz, mol_sz:] += self.distance(mol_encoder_pair_rep, pocket_encoder_pair_rep)
-        concat_pair_rep[:, mol_sz:, :mol_sz] += self.distance(pocket_encoder_pair_rep, mol_encoder_pair_rep)
-        # concat_pair_rep = (concat_pair_rep + concat_pair_rep.transpose(1, 2)) / 2
-
-        decoder_rep = concat_rep
-        decoder_pair_rep = concat_pair_rep
-        for i in range(self.config.recycling):
-            binding_outputs = self.concat_encoder(seq_rep=decoder_rep, pair_rep=decoder_pair_rep,
-                                                  padding_mask=concat_mask)
-            decoder_rep = binding_outputs.last_hidden_state
-            decoder_pair_rep = binding_outputs.last_pair_repr
-
-        mol_decoder = decoder_rep[:, :mol_sz]
-        pocket_decoder = decoder_rep[:, mol_sz:]
-
-        mol_pair_decoder_rep = decoder_pair_rep[:, :mol_sz, :mol_sz, :]
-        mol_pocket_pair_decoder_rep = (decoder_pair_rep[:, :mol_sz, mol_sz:, :] + decoder_pair_rep[:, mol_sz:, :mol_sz,
-                                                                                  :].transpose(1, 2)) / 2.0
-        mol_pocket_pair_decoder_rep[mol_pocket_pair_decoder_rep == float("-inf")] = 0
-
-        cross_rep = torch.cat(
-            [
-                mol_pocket_pair_decoder_rep,
-                mol_decoder.unsqueeze(-2).repeat(1, 1, pocket_sz, 1),
-                pocket_decoder.unsqueeze(-3).repeat(1, mol_sz, 1, 1),
-            ],
-            dim=-1,
-        )  # [batch, mol_sz, pocket_sz, 4*hidden_size]
-
-        cross_distance_predict = (
-                F.elu(self.cross_distance_project(cross_rep).squeeze(-1)) + 1.0
-        )  # batch, mol_sz, pocket_sz
-
-        holo_encoder_pair_rep = torch.cat(
-            [
-                mol_pair_decoder_rep,
-                mol_decoder.unsqueeze(-2).repeat(1, 1, mol_sz, 1),
-            ],
-            dim=-1,
-        )  # [batch, mol_sz, mol_sz, 3*hidden_size]
-        holo_distance_predict = self.holo_distance_project(holo_encoder_pair_rep)  # batch, mol_sz, mol_sz
-
-        distance_mask = distance_target.ne(0)  # 0 is padding
-        if dist_threshold > 0:
-            distance_mask &= (distance_target < dist_threshold)
-        distance_predict = cross_distance_predict[distance_mask]
-        distance_target = distance_target[distance_mask]
-        distance_loss = F.mse_loss(distance_predict.float(), distance_target.float(), reduction="mean")
-
-        ### holo distance loss
-        holo_distance_mask = holo_distance_target.ne(0)  # 0 is padding
-        holo_distance_predict_train = holo_distance_predict[holo_distance_mask]
-        holo_distance_target = holo_distance_target[holo_distance_mask]
-        holo_distance_loss = F.smooth_l1_loss(
-            holo_distance_predict_train.float(),
-            holo_distance_target.float(),
-            reduction="mean",
-            beta=1.0,
-        )
-
-        # score loss
-        pred_score = self.regression_head(cross_rep.mean((1, 2))).view(-1)
-        affinity_loss = F.smooth_l1_loss(pred_score, score, reduction='mean', beta=1.0)
-
-        loss = distance_loss + holo_distance_loss + affinity_loss
-        return DockingPoseOutput(
-            loss=loss,
-            score_loss=affinity_loss,
             cross_loss=distance_loss,
             holo_loss=holo_distance_loss,
             cross_distance_predict=cross_distance_predict,

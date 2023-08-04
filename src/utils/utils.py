@@ -14,6 +14,8 @@ import wandb
 from src.modeling.modeling_base_model import BetaConfig
 
 from .logger import setup_logger
+from ..data.dictionary import Dictionary
+from ..modeling.modeling_foldock2 import FoldDockingForPredict
 
 
 def get_main_dir():
@@ -151,3 +153,23 @@ def init_steps(cfg, dataloader):
         cfg.SOLVER.MAX_EPOCHS = cfg.SOLVER.MAX_STEPS * batch_times // len(dataloader) + 1
     logger = getLogger(cfg.MODEL.NAME)
     logger.info(f'total train steps: {cfg.SOLVER.MAX_STEPS}, train epochs: {cfg.SOLVER.MAX_EPOCHS}')
+
+def get_carsidock_model(ckpt_path, device):
+    ligand_dict = Dictionary.load(get_abs_path('example_data/molecule/dict.txt'))
+    pocket_dict = Dictionary.load(get_abs_path('example_data/pocket/dict.txt'))
+    model_config = BetaConfig(num_hidden_layers=6,
+                              recycling=3,
+                              hidden_size=768,
+                              num_attention_heads=16,
+                              mol_config=BetaConfig(num_hidden_layers=6,
+                                                    vocab_size=len(ligand_dict) + 1,
+                                                    hidden_size=768,
+                                                    num_attention_heads=16),
+                              pocket_config=BetaConfig(num_hidden_layers=6,
+                                                       vocab_size=len(pocket_dict) + 1,
+                                                       hidden_size=768,
+                                                       num_attention_heads=16))
+    model = FoldDockingForPredict(model_config).to(device)
+    model.load_state_dict(torch.load(get_abs_path(ckpt_path))['state_dict'], strict=False)
+    model.eval()
+    return model, ligand_dict, pocket_dict

@@ -21,7 +21,8 @@ import torch.nn.functional as F
 import prody
 from rdkit import Chem
 from spyrmsd import rmsd, molecule
-
+# from func_timeout import func_set_timeout
+from pathlib import Path
 
 def get_torsions(m, removeHs=True):
     if removeHs:
@@ -599,7 +600,7 @@ def prepare_log_data(mol_list, pocket_coords, distance_predict_tta, holo_distanc
 
 def save_sdf(mol_list, output_path):
     if not os.path.exists(os.path.dirname(output_path)):
-        os.makedirs(os.path.dirname(output_path))
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with Chem.SDWriter(output_path) as w:
         for i, mol in enumerate(mol_list):
             w.write(mol)
@@ -617,7 +618,7 @@ def read_mol(mol_path, sanitize=True):
     return mol
 
 
-def extract_pocket(pdb_file, ligand_file):
+def extract_carsidock_pocket(pdb_file, ligand_file, keep_water=True, distance=6):
     with open(pdb_file, 'r') as pdb_file:
         # supp = Chem.SDMolSupplier(ligand_file)
         # ligand = Chem.RemoveAllHs(supp[0])
@@ -630,10 +631,12 @@ def extract_pocket(pdb_file, ligand_file):
         else:
             if ligand_file.endswith('.sdf'):
                 ligand = ligand[0]
-            ligand = Chem.RemoveAllHs(ligand)
+            ligand = Chem.RemoveHs(ligand, sanitize=True, implicitOnly=True)
             positions = ligand.GetConformer().GetPositions()
-        distance = 6
-        protein = prody.parsePDBStream(pdb_file).select('protein or water')
+        if keep_water:
+            protein = prody.parsePDBStream(pdb_file).select('protein or water')
+        else:
+            protein = prody.parsePDBStream(pdb_file).select('protein')
         selected = protein.select(f'same residue as within {distance} of ligand',
                                   ligand=positions)
 
@@ -642,6 +645,39 @@ def extract_pocket(pdb_file, ligand_file):
         pocket = Chem.MolFromPDBBlock(f.getvalue(), sanitize=False, removeHs=True)
         # pocket = Chem.RemoveHs(pocket)
     return pocket, ligand
+
+def extract_pocket(pdb_file, positions: np, distance = 6, sanitize=False, del_water=False, del_ion=True):
+    pdb_str = Path(pdb_file).read_text()
+    protein = prody.parsePDBStream(io.StringIO(pdb_str)).select('protein or water')
+    selected = protein.select(
+        f'same residue as within {distance} of ligand',
+        ligand=positions,
+    )
+    f = io.StringIO()
+    prody.writePDBStream(f, selected)
+    pocket_str = f.getvalue()
+    pdb_content = []
+    # 处理蛋白中的水和金属离子
+    for line in io.StringIO(pocket_str).readlines():
+        if del_water and line.startswith('HETATM') and line[17:20] =='HOH':
+            pass
+        elif del_ion and len(line[17:20].strip()) == 2:
+            pass
+        else:
+            pdb_content.append(line)
+
+    if sanitize:
+        prot = Chem.MolFromPDBBlock(''.join(pdb_content), sanitize=False)
+        problems = Chem.DetectChemistryProblems(prot)
+        if problems:
+            raise ValueError(f'pocket: {[problem.Message() for problem in problems]}')
+        else:
+            pocket = Chem.MolFromPDBBlock(''.join(pdb_content))
+            Chem.RemoveHs(pocket)
+            return pocket
+    else:
+        pocket = Chem.MolFromPDBBlock(''.join(pdb_content), sanitize=False, removeHs=True)
+        return pocket
 
 
 def extract_pocket_core(pdb_pre, reflig_mol, cutoff=6):
@@ -677,6 +713,7 @@ def extract_pocket_extra(pdb_file, ligand_file):
         return pocket, ligand, pdb_pre
 
 
+# @func_set_timeout(5)
 def get_symmetry_rmsd(mol, coords1, coords2, mol2=None):
     mol = molecule.Molecule.from_rdkit(mol)
     mol2 = molecule.Molecule.from_rdkit(mol2) if mol2 is not None else mol2
@@ -691,3 +728,10 @@ def get_symmetry_rmsd(mol, coords1, coords2, mol2=None):
         mol2_adjacency_matrix,
     )
     return RMSD
+
+def read_pocket(pdb_path):
+    """
+    read pocket from .pdb file.
+    """
+    p_mol = read_mol(pdb_path)
+    return p_mol

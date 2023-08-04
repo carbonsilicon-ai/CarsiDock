@@ -110,58 +110,6 @@ def single_conf_gen_no_MMFF(tgt_mol, num_confs=1000, seed=42):
     mol = Chem.RemoveHs(mol)
     return mol
 
-
-def clustering(mol, M=1000, N=50):
-    rdkit_mol = single_conf_gen(mol, num_confs=M // 2)
-    rdkit_mol = Chem.RemoveHs(rdkit_mol)
-    total_sz = 0
-    sz = len(rdkit_mol.GetConformers())
-    tgt_coords = rdkit_mol.GetConformers()[0].GetPositions().astype(np.float32)
-    tgt_coords = tgt_coords - np.mean(tgt_coords, axis=0)
-    rdkit_coords_list = []
-    for i in range(sz):
-        _coords = rdkit_mol.GetConformers()[i].GetPositions().astype(np.float32)
-        _coords = _coords - _coords.mean(axis=0)  # need to normalize first
-        _R, _score = Rotation.align_vectors(_coords, tgt_coords)
-        rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
-    total_sz += sz
-
-    ### add no MMFF optimize conformers
-    # rdkit_mol = single_conf_gen_no_MMFF(mol, num_confs=int(M // 4), seed=43)
-    rdkit_mol = single_conf_gen_no_MMFF(mol, num_confs=int(M // 4), seed=43)
-    rdkit_mol = Chem.RemoveHs(rdkit_mol)
-    sz = len(rdkit_mol.GetConformers())
-    for i in range(sz):
-        _coords = rdkit_mol.GetConformers()[i].GetPositions().astype(np.float32)
-        _coords = _coords - _coords.mean(axis=0)  # need to normalize first
-        _R, _score = Rotation.align_vectors(_coords, tgt_coords)
-        rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
-    total_sz += sz
-
-    ### add uniform rotation bonds conformers
-    # rdkit_mol = single_conf_gen_bonds(mol, num_confs=int(M // 4), seed=43)
-    rdkit_mol = single_conf_gen_bonds(mol, num_confs=int(M // 4), seed=43)
-    rdkit_mol = Chem.RemoveHs(rdkit_mol)
-    sz = len(rdkit_mol.GetConformers())
-    for i in range(sz):
-        _coords = rdkit_mol.GetConformers()[i].GetPositions().astype(np.float32)
-        _coords = _coords - _coords.mean(axis=0)  # need to normalize first
-        _R, _score = Rotation.align_vectors(_coords, tgt_coords)
-        rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
-    total_sz += sz
-
-    rdkit_coords_flatten = np.array(rdkit_coords_list).reshape(total_sz, -1)
-    cluster_size = N
-    ids = (
-        KMeans(n_clusters=cluster_size, random_state=42, n_init=10)
-        .fit_predict(rdkit_coords_flatten)
-        .tolist()
-    )
-    coords_list = [rdkit_coords_list[ids.index(i)] for i in range(cluster_size)]
-    # return rdkit_coords_list,ids
-    return coords_list
-
-
 def clustering2(mol, M=100, N=5, conf_threshold=60):
     Chem.rdmolops.AssignAtomChiralTagsFromStructure(mol)
     atom_num = len(mol.GetAtoms())
@@ -183,28 +131,6 @@ def clustering2(mol, M=100, N=5, conf_threshold=60):
         _R, _score = Rotation.align_vectors(_coords, tgt_coords)
         rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
     total_sz += sz
-
-    ### add no MMFF optimize conformers
-    # rdkit_mol = single_conf_gen_no_MMFF(mol, num_confs=int(M // 4), seed=43)
-    # rdkit_mol = Chem.RemoveHs(rdkit_mol)
-    # sz = len(rdkit_mol.GetConformers())
-    # for i in range(sz):
-    #     _coords = rdkit_mol.GetConformers()[i].GetPositions().astype(np.float32)
-    #     _coords = _coords - _coords.mean(axis=0)  # need to normalize first
-    #     _R, _score = Rotation.align_vectors(_coords, tgt_coords)
-    #     rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
-    # total_sz += sz
-
-    ### add uniform rotation bonds conformers
-    # rdkit_mol = single_conf_gen_bonds(mol, num_confs=int(M // 4), seed=43)
-    # rdkit_mol = Chem.RemoveHs(rdkit_mol)
-    # sz = len(rdkit_mol.GetConformers())
-    # for i in range(sz):
-    #     _coords = rdkit_mol.GetConformers()[i].GetPositions().astype(np.float32)
-    #     _coords = _coords - _coords.mean(axis=0)  # need to normalize first
-    #     _R, _score = Rotation.align_vectors(_coords, tgt_coords)
-    #     rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
-    # total_sz += sz
 
     # 部分小分子生成的构象少于聚类数目
     if len(rdkit_coords_list) > N:
