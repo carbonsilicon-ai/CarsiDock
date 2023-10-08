@@ -1,6 +1,9 @@
+import os
+
 import numpy as np
 import copy
 import torch
+from openbabel import openbabel, pybel
 from rdkit import Chem
 from rdkit.Chem import rdMolTransforms
 from rdkit.Chem import AllChem
@@ -8,6 +11,8 @@ from scipy.spatial.transform import Rotation
 from sklearn.cluster import KMeans
 from src.utils.dist_to_coords_utils import get_mask_rotate, modify_conformer
 from src.utils.docking_utils import set_coord
+
+os.environ['OB_RANDOM_SEED'] = '42'
 
 
 def single_conf_gen(tgt_mol, num_confs=1000, seed=42, mmff=False):
@@ -110,32 +115,56 @@ def single_conf_gen_no_MMFF(tgt_mol, num_confs=1000, seed=42):
     mol = Chem.RemoveHs(mol)
     return mol
 
-def clustering2(mol, M=100, N=5, conf_threshold=60):
-    Chem.rdmolops.AssignAtomChiralTagsFromStructure(mol)
-    atom_num = len(mol.GetAtoms())
-    M = min(N * 5, M)
-    rdkit_mol = single_conf_gen(mol, num_confs=M, mmff=(atom_num <= conf_threshold))
+
+def obabel_gen(input_rdkit_mol, total_confs=10, num_classes=5):
+    input_file = os.path.abspath('base.sdf')
+    output_file = os.path.abspath('out.sdf')
+    gen3d = openbabel.OBOp.FindType("gen3D")
+    smi = Chem.MolToSmiles(input_rdkit_mol)
+    mol = pybel.readstring("smi", smi)
+    gen3d.Do(mol.OBMol, "--best")
+    mol.write('sdf', input_file, overwrite=True)
+    if os.path.exists(output_file):
+        os.remove(output_file)
+    os.system(
+        f"OB_RANDOM_SEED=42 obabel {input_file} -O {output_file} --conformer --nconf {total_confs} --writeconformers > /dev/null")
+    sup = Chem.SDMolSupplier(output_file)
+    if os.path.exists(output_file):
+        os.remove(input_file)
+        os.remove(output_file)
+    mol_list = [Chem.RemoveAllHs(m) for m in sup]
+    coord_list = [m.GetConformer().GetPositions() for m in mol_list]
+    new_coords = clustering(coord_list, num_classes)
+    new_mol = mol_list[0]
+    new_mol_list = [set_coord(copy.deepcopy(new_mol), coord, 0) for coord in new_coords]
+    return new_mol_list
+
+
+def rdkit_gen(input_rdkit_mol, total_confs=10, num_classes=5):
+    Chem.rdmolops.AssignAtomChiralTagsFromStructure(input_rdkit_mol)
+    rdkit_mol = single_conf_gen(input_rdkit_mol, num_confs=total_confs, mmff=False)
     rdkit_mol = Chem.RemoveAllHs(rdkit_mol)
-    total_sz = 0
     sz = len(rdkit_mol.GetConformers())
     if sz == 0:
-        rdkit_mol = copy.deepcopy(mol)
+        rdkit_mol = copy.deepcopy(input_rdkit_mol)
         rdkit_mol = Chem.RemoveAllHs(rdkit_mol)
-        sz = len(rdkit_mol.GetConformers())
-    tgt_coords = rdkit_mol.GetConformers()[0].GetPositions().astype(np.float32)
+    coord_list = [conf.GetPositions() for conf in rdkit_mol.GetConformers()]
+    new_coords = clustering(coord_list, num_classes)
+    new_mol_list = [set_coord(copy.deepcopy(rdkit_mol), coord, 0) for coord in new_coords]
+    return new_mol_list
+
+
+def clustering(coords, num_classes=5):
+    tgt_coords = coords[0]
     tgt_coords = tgt_coords - np.mean(tgt_coords, axis=0)
     rdkit_coords_list = []
-    for i in range(sz):
-        _coords = rdkit_mol.GetConformers()[i].GetPositions().astype(np.float32)
+    for _coords in coords:
         _coords = _coords - _coords.mean(axis=0)  # need to normalize first
         _R, _score = Rotation.align_vectors(_coords, tgt_coords)
         rdkit_coords_list.append(np.dot(_coords, _R.as_matrix()))
-    total_sz += sz
-
-    # 部分小分子生成的构象少于聚类数目
-    if len(rdkit_coords_list) > N:
-        rdkit_coords_flatten = np.array(rdkit_coords_list).reshape(total_sz, -1)
-        cluster_size = N
+    if len(rdkit_coords_list) > num_classes:
+        rdkit_coords_flatten = np.array(rdkit_coords_list).reshape(len(coords), -1)
+        cluster_size = num_classes
         ids = (
             KMeans(n_clusters=cluster_size, random_state=42, n_init=10)
             .fit_predict(rdkit_coords_flatten)
@@ -145,5 +174,19 @@ def clustering2(mol, M=100, N=5, conf_threshold=60):
         ids_set = set(ids)
         coords_list = [rdkit_coords_list[ids.index(i)] for i in range(cluster_size) if i in ids_set]
     else:
-        coords_list = rdkit_coords_list[:N]
+        coords_list = rdkit_coords_list[:num_classes]
     return coords_list
+
+
+def gen_init_conf(mol, num_confs=5, obabel_init=False):
+    if num_confs < 3:
+        num_confs = 3
+    if obabel_init:
+        mol_list = obabel_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
+        if len(mol_list) <= 1:
+            print('obabel generate conformer failed, use rdkit.')
+            mol_list = rdkit_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
+    else:
+        mol_list = rdkit_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
+    print(len(mol_list))
+    return mol_list

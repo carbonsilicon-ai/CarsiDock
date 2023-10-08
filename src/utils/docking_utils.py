@@ -23,6 +23,7 @@ from rdkit import Chem
 from spyrmsd import rmsd, molecule
 # from func_timeout import func_set_timeout
 from pathlib import Path
+from rdkit.Chem.rdchem import Conformer
 
 def get_torsions(m, removeHs=True):
     if removeHs:
@@ -358,10 +359,17 @@ def single_dock_with_gradient(
     return coords.detach().cpu().numpy(), loss.detach().cpu().item(), meta_info
 
 
-def set_coord(mol, coords, idx):
-    for i in range(coords.shape[0]):
-        mol.GetConformer(idx).SetAtomPosition(i, coords[i].tolist())
-    return mol
+def set_coord(mol, coords, idx=0):
+    _mol = copy.deepcopy(mol)
+    if len(_mol.GetConformers()) == 0:
+        conf = Conformer(len(_mol.GetAtoms()))
+        for i in range(len(_mol.GetAtoms())):
+            conf.SetAtomPosition(i, coords[i].tolist())
+        _mol.AddConformer(conf)
+    else:
+        for i in range(coords.shape[0]):
+            _mol.GetConformer(idx).SetAtomPosition(i, coords[i].tolist())
+    return _mol
 
 
 def add_coord(mol, xyz, idx=0):
@@ -646,8 +654,7 @@ def extract_carsidock_pocket(pdb_file, ligand_file, keep_water=True, distance=6)
         # pocket = Chem.RemoveHs(pocket)
     return pocket, ligand
 
-def extract_pocket(pdb_file, positions: np, distance = 6, sanitize=False, del_water=False, del_ion=True):
-    pdb_str = Path(pdb_file).read_text()
+def extract_pocket(pdb_str: str, positions: np, distance = 10, sanitize=False, del_water=True, del_ion=True):
     protein = prody.parsePDBStream(io.StringIO(pdb_str)).select('protein or water')
     selected = protein.select(
         f'same residue as within {distance} of ligand',
@@ -657,7 +664,6 @@ def extract_pocket(pdb_file, positions: np, distance = 6, sanitize=False, del_wa
     prody.writePDBStream(f, selected)
     pocket_str = f.getvalue()
     pdb_content = []
-    # 处理蛋白中的水和金属离子
     for line in io.StringIO(pocket_str).readlines():
         if del_water and line.startswith('HETATM') and line[17:20] =='HOH':
             pass
@@ -673,10 +679,11 @@ def extract_pocket(pdb_file, positions: np, distance = 6, sanitize=False, del_wa
             raise ValueError(f'pocket: {[problem.Message() for problem in problems]}')
         else:
             pocket = Chem.MolFromPDBBlock(''.join(pdb_content))
-            Chem.RemoveHs(pocket)
+            pocket = Chem.RemoveHs(pocket)
             return pocket
     else:
         pocket = Chem.MolFromPDBBlock(''.join(pdb_content), sanitize=False, removeHs=True)
+        pocket = Chem.RemoveHs(pocket, sanitize=False)
         return pocket
 
 

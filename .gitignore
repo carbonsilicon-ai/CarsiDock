@@ -121,3 +121,4 @@ lightning_logs
 *.pkl
 # *.sdf
 *.ckpt
+exclude.list

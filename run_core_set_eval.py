@@ -28,7 +28,7 @@ def print_results(rmsd_results):
 def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda_device_index)
     DEVICE = torch.device(f'cuda')
-    final_conformers = args.num_conformer
+    final_conformers = args.num_conformer**2
 
     if args.cuda_convert:
         import pydock

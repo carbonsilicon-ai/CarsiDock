@@ -11,25 +11,11 @@ from torch.autograd import Variable
 from torch.distributions import Normal
 import math
 
-from src.utils.conf_gen import clustering2, get_torsions
-from rdkit.Chem.rdchem import Conformer
+from src.utils.conf_gen import gen_init_conf, get_torsions, single_conf_gen
 
 from src.utils.dist_to_coords_utils import modify_conformer, get_mask_rotate
 from src.utils.docking_utils import optimize_rotatable_bonds, prepare_log_data, add_coord, save_sdf, dock_with_gradient, \
-    single_SF_loss, get_symmetry_rmsd
-
-
-def set_coord(mol, coords):
-    _mol = copy.deepcopy(mol)
-    if len(_mol.GetConformers()) == 0:
-        conf = Conformer(len(_mol.GetAtoms()))
-        for i in range(len(_mol.GetAtoms())):
-            conf.SetAtomPosition(i, coords[i].tolist())
-        _mol.AddConformer(conf)
-    else:
-        for i in range(coords.shape[0]):
-            _mol.GetConformer().SetAtomPosition(i, coords[i].tolist())
-    return _mol
+    single_SF_loss, get_symmetry_rmsd, set_coord
 
 
 def prepare_data_from_mol(mol_list, dictionary, prefix='mol', max_atoms=384, device='cuda'):
@@ -311,10 +297,8 @@ def read_ligands(mol_list=None, smiles=None, num_gen_conf=100, num_use_conf=5):
         mol_list = [Chem.MolFromSmiles(smi) for smi in smiles]
         for mol in mol_list:
             mol.SetProp('_Name', Chem.MolToInchiKey(mol))
-    # print(Chem.MolToInchiKey(mol_list[0]))
     mol_list = [Chem.RemoveAllHs(mol) for mol in mol_list if mol is not None]
-    total_coords = [clustering2(mol, num_gen_conf, num_use_conf) for mol in mol_list]
-    total_mol_list = [[set_coord(mol, coord) for coord in coords] for mol, coords in zip(mol_list, total_coords)]
+    total_mol_list = [gen_init_conf(mol, num_confs=num_use_conf) for mol in mol_list]
     return total_mol_list
 
 
