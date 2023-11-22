@@ -188,5 +188,4 @@ def gen_init_conf(mol, num_confs=5, obabel_init=False):
             mol_list = rdkit_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
     else:
         mol_list = rdkit_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
-    print(len(mol_list))
     return mol_list
