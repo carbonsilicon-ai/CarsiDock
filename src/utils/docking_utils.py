@@ -654,7 +654,8 @@ def extract_carsidock_pocket(pdb_file, ligand_file, keep_water=True, distance=6)
         # pocket = Chem.RemoveHs(pocket)
     return pocket, ligand
 
-def extract_pocket(pdb_str: str, positions: np, distance = 10, sanitize=False, del_water=True, del_ion=True):
+def extract_pocket(pdb_file, positions: np, distance = 6, sanitize=False, del_water=False, del_ion=True):
+    pdb_str = Path(pdb_file).read_text()
     protein = prody.parsePDBStream(io.StringIO(pdb_str)).select('protein or water')
     selected = protein.select(
         f'same residue as within {distance} of ligand',

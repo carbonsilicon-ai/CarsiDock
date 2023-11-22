@@ -62,7 +62,7 @@ def main(args):
     elif args.ligands.endswith('.txt'):
         with open(get_abs_path(args.ligands), 'r', encoding='utf8') as f:
             smiles = [line.strip() for line in f.readlines()]
-        data= smiles
+        data = smiles
     else:
         assert ValueError('only support .sdf or .txt file.')
 
@@ -81,6 +81,7 @@ def main(args):
     if args.output_dir is not None:
         df = pd.DataFrame(zip(ids, scores), columns=["#code_ligand_num", "score"])
         df.to_csv(f"{get_abs_path(args.output_dir)}/score.dat", index=False, sep="\t")
+
 
 if __name__ == '__main__':
     pl.seed_everything(42)
