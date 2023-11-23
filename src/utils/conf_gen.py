@@ -142,7 +142,7 @@ def obabel_gen(input_rdkit_mol, total_confs=10, num_classes=5):
 
 def rdkit_gen(input_rdkit_mol, total_confs=10, num_classes=5):
     Chem.rdmolops.AssignAtomChiralTagsFromStructure(input_rdkit_mol)
-    rdkit_mol = single_conf_gen(input_rdkit_mol, num_confs=total_confs, mmff=False)
+    rdkit_mol = single_conf_gen(input_rdkit_mol, num_confs=total_confs, mmff=True)
     rdkit_mol = Chem.RemoveAllHs(rdkit_mol)
     sz = len(rdkit_mol.GetConformers())
     if sz == 0:
@@ -181,11 +181,12 @@ def clustering(coords, num_classes=5):
 def gen_init_conf(mol, num_confs=5, obabel_init=False):
     if num_confs < 3:
         num_confs = 3
+    times = 5
     if obabel_init:
-        mol_list = obabel_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
+        mol_list = obabel_gen(mol, total_confs=num_confs * times, num_classes=num_confs)
         if len(mol_list) <= 1:
             print('obabel generate conformer failed, use rdkit.')
-            mol_list = rdkit_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
+            mol_list = rdkit_gen(mol, total_confs=num_confs * times, num_classes=num_confs)
     else:
-        mol_list = rdkit_gen(mol, total_confs=num_confs * 2, num_classes=num_confs)
+        mol_list = rdkit_gen(mol, total_confs=num_confs * times, num_classes=num_confs)
     return mol_list

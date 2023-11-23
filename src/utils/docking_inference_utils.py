@@ -229,7 +229,7 @@ def convert_dist2coord(infer_output, ligands: List, target_mol=None, output_path
         else:
             mol_list = [mp.dist_to_coords_with_tor(*arg) for arg in args]
 
-    mol_list = sorted([m for m in mol_list if m is not None], key=lambda x: 5 * x[1] - 1 * x[2])[:-2]
+    mol_list = sorted([m for m in mol_list if m is not None], key=lambda x: 5 * x[1] - 1 * x[2])
     rdkit_mol_list = [item[0] for item in mol_list]
 
     rmsd = None
