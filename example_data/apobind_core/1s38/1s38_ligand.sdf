@@ -1,0 +1,117 @@
+:1s38_ligand
+                    3D
+ Schrodinger Suite 2020-1.
+ 22 23  0  0  1  0            999 V2000
+   17.1110   16.7670   18.7770 C   0  0  0  0  0  0
+   16.0680   16.4780   19.7180 C   0  0  0  0  0  0
+   14.6910   15.9090   19.2960 C   0  0  0  0  0  0
+   16.3090   16.7310   21.1290 C   0  0  0  0  0  0
+   15.3370   16.4740   22.0920 N   0  0  0  0  0  0
+   15.5140   16.6900   23.3800 C   0  0  0  0  0  0
+   14.5310   16.4170   24.2140 N   0  0  0  0  0  0
+   16.6740   17.1860   23.8600 N   0  0  0  0  0  0
+   17.7200   17.4890   23.0730 C   0  0  0  0  0  0
+   18.7830   17.9410   23.4930 O   0  0  0  0  0  0
+   17.5900   17.2630   21.5480 C   0  0  0  0  0  0
+   18.6150   17.5430   20.5890 C   0  0  0  0  0  0
+   18.3790   17.2950   19.1960 C   0  0  0  0  0  0
+   16.9102   16.6189   17.7304 H   0  0  0  0  0  0
+   14.4811   14.9806   19.8269 H   0  0  0  0  0  0
+   13.8953   16.6203   19.5068 H   0  0  0  0  0  0
+   14.6768   15.6924   18.2278 H   0  0  0  0  0  0
+   14.5695   16.6009   25.2109 H   0  0  0  0  0  0
+   13.6863   15.9307   23.9250 H   0  0  0  0  0  0
+   16.7707   17.3238   24.8610 H   0  0  0  0  0  0
+   19.5672   17.9446   20.9032 H   0  0  0  0  0  0
+   19.1413   17.5133   18.4638 H   0  0  0  0  0  0
+  1  2  2  0  0  0
+  1 13  1  0  0  0
+  1 14  1  0  0  0
+  2  3  1  0  0  0
+  2  4  1  0  0  0
+  3 15  1  0  0  0
+  3 16  1  0  0  0
+  3 17  1  0  0  0
+  4  5  1  0  0  0
+  4 11  2  0  0  0
+  5  6  2  0  0  0
+  6  7  1  0  0  0
+  6  8  1  0  0  0
+  7 18  1  0  0  0
+  7 19  1  0  0  0
+  8  9  1  0  0  0
+  8 20  1  0  0  0
+  9 10  2  0  0  0
+  9 11  1  0  0  0
+ 11 12  1  0  0  0
+ 12 13  2  0  0  0
+ 12 21  1  0  0  0
+ 13 22  1  0  0  0
+M  END
+> <s_pdb_PDB_ID>
+
+
+> <s_pdb_PDB_CLASSIFICATION>
+1S38_PROTEIN
+
+> <s_pdb_PDB_format_version>
+3.0
+
+> <b_ppw_prepared>
+1
+
+> <s_ppw_prepared_with_version>
+2020-1
+
+> <b_ppw_created_disulfur>
+1
+
+> <s_ppw_het_states>
+eJxVkUsOwyAMRK+CWFNk7PLLVSpuEHXXVZS7F3DQiCzQ48mBGXFZtof59E9CZWeoOTNQgG9gBCZgBhZgXchEwABkoADnbYOfQJqFn0OHmDMBOTXiLiJEnCLtYt7OqKItGIW0S9hEhajzDFpiorbjTTAmNLpAyOrCo++LfP/lsiNPfxHyUnKfsCmT9H3whWu4nfn+zlPX1u4/lEZd/Q==
+
+> <r_ff_Potential_Energy-OPLS3e>
+-152943.792348939
+
+> <r_ff_RMS_Derivative-OPLS3e>
+0.0474490350587215
+
+> <b_ff_Minimization_Converged-OPLS3e>
+1
+
+> <r_i_Potential_Energy-OPLS_2005>
+-11323.8606202018
+
+> <r_i_RMS_Derivative-OPLS_2005>
+0.0450536467202138
+
+> <r_i_Max_Derivative-OPLS_2005>
+1.29575954444477
+
+> <r_i_Stretch_Energy-OPLS_2005>
+17.6621073523739
+
+> <r_i_Bend_Energy-OPLS_2005>
+253.706408270876
+
+> <r_i_LJ-14_Energy-OPLS_2005>
+487.085384251144
+
+> <r_i_El-14_Energy-OPLS_2005>
+-621.639593871208
+
+> <r_i_Van_der_Waals_Energy-OPLS_2005>
+-733.835720337676
+
+> <r_i_Electrostatic_Energy-OPLS_2005>
+-10827.4926063712
+
+> <r_i_Dihedral_Energy-OPLS_2005>
+100.653400503896
+
+> <r_i_target_temperature>
+298
+
+> <s_user_Residue_ID>
+_:1
+
+$$$$

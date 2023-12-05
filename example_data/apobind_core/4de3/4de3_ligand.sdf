@@ -1,0 +1,135 @@
+:4de3_ligand
+                    3D
+ Schrodinger Suite 2020-1.
+ 30 32  0  0  1  0            999 V2000
+   -8.8980   55.8690   13.4010 O   0  0  0  0  0  0
+   -8.6180   55.8480   12.1980 C   0  0  0  0  0  0
+   -9.3210   56.8030   11.2640 C   0  0  0  0  0  0
+   -9.0510   56.7520    9.8870 C   0  0  0  0  0  0
+   -9.6910   57.6170    9.0100 C   0  0  0  0  0  0
+  -10.2150   57.7410   11.7670 C   0  0  0  0  0  0
+  -10.8420   58.6270   10.8870 C   0  0  0  0  0  0
+  -12.0240   59.9130   11.5790 Br  0  0  0  0  0  0
+  -10.5960   58.5780    9.5220 C   0  0  0  0  0  0
+   -7.7270   55.0220   11.6640 N   0  0  0  0  0  0
+   -6.7450   54.3770   12.4450 C   0  0  0  0  0  0
+   -7.1350   53.7290   13.6200 C   0  0  0  0  0  0
+   -6.1890   53.0690   14.4150 C   0  0  0  0  0  0
+   -4.8380   52.9950   14.0690 C   0  0  0  0  0  0
+   -4.4380   53.6120   12.8800 C   0  0  0  0  0  0
+   -5.3880   54.2990   12.0990 C   0  0  0  0  0  0
+   -3.0910   53.5560   12.5310 C   0  0  0  0  0  0
+   -2.5220   53.9710   11.4090 N   0  5  0  0  0  0
+   -1.1770   53.7360   11.4080 N   0  0  0  0  0  0
+   -0.8980   53.1040   12.5660 N   0  0  0  0  0  0
+   -2.1100   53.0170   13.2490 N   0  0  0  0  0  0
+   -8.3579   56.0400    9.4643 H   0  0  0  0  0  0
+   -9.4937   57.5695    7.9487 H   0  0  0  0  0  0
+  -10.4195   57.8061   12.8230 H   0  0  0  0  0  0
+  -11.1130   59.2586    8.8710 H   0  0  0  0  0  0
+   -7.5343   55.1194   10.6784 H   0  0  0  0  0  0
+   -8.1692   53.6659   13.9195 H   0  0  0  0  0  0
+   -6.5168   52.5783   15.3189 H   0  0  0  0  0  0
+   -4.1652   52.4515   14.7071 H   0  0  0  0  0  0
+   -5.0752   54.7961   11.1955 H   0  0  0  0  0  0
+  1  2  2  0  0  0
+  2  3  1  0  0  0
+  2 10  1  0  0  0
+  3  4  2  0  0  0
+  3  6  1  0  0  0
+  4  5  1  0  0  0
+  4 22  1  0  0  0
+  5  9  2  0  0  0
+  5 23  1  0  0  0
+  6  7  2  0  0  0
+  6 24  1  0  0  0
+  7  8  1  0  0  0
+  7  9  1  0  0  0
+  9 25  1  0  0  0
+ 10 11  1  0  0  0
+ 10 26  1  0  0  0
+ 11 12  2  0  0  0
+ 11 16  1  0  0  0
+ 12 13  1  0  0  0
+ 12 27  1  0  0  0
+ 13 14  2  0  0  0
+ 13 28  1  0  0  0
+ 14 15  1  0  0  0
+ 14 29  1  0  0  0
+ 15 16  2  0  0  0
+ 15 17  1  0  0  0
+ 16 30  1  0  0  0
+ 17 18  1  0  0  0
+ 17 21  2  0  0  0
+ 18 19  1  0  0  0
+ 19 20  2  0  0  0
+ 20 21  1  0  0  0
+M  CHG  1  18  -1
+M  END
+> <s_pdb_PDB_ID>
+
+
+> <s_pdb_PDB_CLASSIFICATION>
+4DE3_PROTEIN
+
+> <s_pdb_PDB_format_version>
+3.0
+
+> <b_ppw_prepared>
+1
+
+> <s_ppw_prepared_with_version>
+2020-1
+
+> <b_ppw_created_disulfur>
+1
+
+> <s_ppw_het_states>
+eJxVUkEOgzAM+wriDKhJQ5vtKxM/QLvthPj7moTNlAOyTVMnDsdI43N4tYep6DSkbRoMPv6wJkACZMAMKIArYAGsgHCrcFO4KdwUbgo3hZs2t5kuDDuFnbqd4WvSGJIxb4xKnVD/gn2LBLgTMk6QCwyBXSgoyS4IBHFhRYn8SgiBRVaE2CIxvgt668NbV8yi3qmidYceKiHfuIM7QXDCG7MQuRPQusEI/7aHWAFjG3EH2SLmtLTGjtFK2z8Y1FhpLC2cg1VnmYSDq3M7KiVJkJT1nIb3Z9/jvW3nF+xdlrc=
+
+> <r_ff_Potential_Energy-OPLS3e>
+-90730.0699246931
+
+> <r_ff_RMS_Derivative-OPLS3e>
+0.0491852376545055
+
+> <b_ff_Minimization_Converged-OPLS3e>
+1
+
+> <r_i_Potential_Energy-OPLS_2005>
+-8033.23572956294
+
+> <r_i_RMS_Derivative-OPLS_2005>
+0.0473153521747946
+
+> <r_i_Max_Derivative-OPLS_2005>
+1.59548645975149
+
+> <r_i_Stretch_Energy-OPLS_2005>
+6.14937803699416
+
+> <r_i_Bend_Energy-OPLS_2005>
+153.047813070105
+
+> <r_i_LJ-14_Energy-OPLS_2005>
+347.358825945285
+
+> <r_i_El-14_Energy-OPLS_2005>
+-346.062580785721
+
+> <r_i_Van_der_Waals_Energy-OPLS_2005>
+-611.490861195014
+
+> <r_i_Electrostatic_Energy-OPLS_2005>
+-7665.95588298964
+
+> <r_i_Dihedral_Energy-OPLS_2005>
+83.7175783550532
+
+> <r_i_target_temperature>
+298
+
+> <s_user_Residue_ID>
+_:1
+
+$$$$
