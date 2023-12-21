@@ -1,5 +1,5 @@
 # CarsiDock
-Official implementation of CarsiDock.
+Official repo of CarsiDock proposed by CarbonSilicon AI.
 
 ![Overview](./doc/overview.png)
 
