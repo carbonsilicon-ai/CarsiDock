@@ -1,6 +1,8 @@
 # CarsiDock
 Official repo of CarsiDock proposed by CarbonSilicon AI.
 
+[paper](http://dx.doi.org/10.1039/D3SC05552C)
+
 ![Overview](./doc/overview.png)
 
 ## Environment
