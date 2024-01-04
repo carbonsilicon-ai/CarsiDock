@@ -1,7 +1,7 @@
 # CarsiDock
 Official repo of CarsiDock proposed by CarbonSilicon AI.
 
-[paper](http://dx.doi.org/10.1039/D3SC05552C)
+【[paper](https://pubs.rsc.org/en/content/articlelanding/2024/SC/D3SC05552C)】
 
 ![Overview](./doc/overview.png)
 
@@ -55,13 +55,13 @@ RTMScore: [GitHub](https://github.com/sc8668/RTMScore/raw/main/trained_models/rt
 If you find our work helpful, please consider citing.
 ```
 @Article{D3SC05552C,
-author ="Hou, Tingjun and Cai, Heng and Shen, Chao and Jian, Tianye and Zhang, Xujun and Chen, Tong and Han, Xiaoqi and Yang, Zhuo and Dang, Wei and Hsieh, Chang-Yu and Kang, Yu and Pan, Peichen and Ji, Xiangyang and Song, Jianfei and Deng, Yafeng",
-title  ="CarsiDock: a deep learning paradigm for accurate protein-ligand docking and screening based on large-scale pre-training",
+author ="Cai, Heng and Shen, Chao and Jian, Tianye and Zhang, Xujun and Chen, Tong and Han, Xiaoqi and Yang, Zhuo and Dang, Wei and Hsieh, Chang-Yu and Kang, Yu and Pan, Peichen and Ji, Xiangyang and Song, Jianfei and Hou, Tingjun and Deng, Yafeng",
+title  ="CarsiDock: a deep learning paradigm for accurate protein–ligand docking and screening based on large-scale pre-training",
 journal  ="Chem. Sci.",
 year  ="2024",
 pages  ="-",
 publisher  ="The Royal Society of Chemistry",
 doi  ="10.1039/D3SC05552C",
 url  ="http://dx.doi.org/10.1039/D3SC05552C",
-abstract  ="The expertise accumulated on deep neural networks-based structure prediction has been widely transferred to the field of protein-ligand binding pose prediction{,} thus leading to the emergence of a variety of deep learning-guided docking models for predicting protein-ligand binding poses without relying on heavy sampling. However{,} their prediction accuracy and applicability are still far from satisfaction{,} partially due to the lack of protein-ligand binding complex data. To this end{,} we create a large-scale complex dataset containing ~9M protein-ligand docking complexes for pre-training{,} and propose CarsiDock{,} the first deep learning-guided docking approach that leverages pre-training of millions of predicted protein-ligand complexes. CarsiDock contains two main stages{,} i.e.{,} a deep learning model for the prediction of protein-ligand atomic distance matrices{,} and a translation{,} rotation and torsion-guided geometry optimization procedure to reconstruct the matrices into a credible binding pose. The pre-training and multiple innovative architectural designs facilitate the dramatically improved docking accuracy of our approach over the baselines in terms of multiple docking scenarios{,} thereby contributing to its outstanding early recognition performance in several retrospective virtual screening campaigns. Further explorations demonstrate that CarsiDock can not only guarantee the topological reliability of the binding poses but also successfully reproduce the crucial interactions in crystalized structures{,} highlighting its superior applicability."}
+abstract  ="The expertise accumulated in deep neural network-based structure prediction has been widely transferred to the field of protein–ligand binding pose prediction{,} thus leading to the emergence of a variety of deep learning-guided docking models for predicting protein–ligand binding poses without relying on heavy sampling. However{,} their prediction accuracy and applicability are still far from satisfactory{,} partially due to the lack of protein–ligand binding complex data. To this end{,} we create a large-scale complex dataset containing ∼9 M protein–ligand docking complexes for pre-training{,} and propose CarsiDock{,} the first deep learning-guided docking approach that leverages pre-training of millions of predicted protein–ligand complexes. CarsiDock contains two main stages{,} i.e.{,} a deep learning model for the prediction of protein–ligand atomic distance matrices{,} and a translation{,} rotation and torsion-guided geometry optimization procedure to reconstruct the matrices into a credible binding pose. The pre-training and multiple innovative architectural designs facilitate the dramatically improved docking accuracy of our approach over the baselines in terms of multiple docking scenarios{,} thereby contributing to its outstanding early recognition performance in several retrospective virtual screening campaigns. Further explorations demonstrate that CarsiDock can not only guarantee the topological reliability of the binding poses but also successfully reproduce the crucial interactions in crystalized structures{,} highlighting its superior applicability."}
 ```
