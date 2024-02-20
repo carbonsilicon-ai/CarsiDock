@@ -10,8 +10,13 @@ The expertise accumulated in deep neural network-based structure prediction has 
 
 ## Environment
 We tested the code in the following docker environment on Tesla A100 GPU machine.
+Build image from docker file
 ```shell
 docker build -f DockerFile -t carsidock:v1 .
+```
+or use image in DockerHub.
+```shell
+docker tag abtion/carsidock:v2 carsidock:v1
 ```
 
 ## Evaluate on PDBBind Core Set.
