@@ -16,7 +16,7 @@ FROM nvcr.io/nvidia/pytorch:22.09-py3
 
 # Install Python Requirements
 RUN pip install  dgl -f https://data.dgl.ai/wheels/cu118/repo.html
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+# RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
