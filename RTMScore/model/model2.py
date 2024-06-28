@@ -523,7 +523,7 @@ class RTMScore(nn.Module):
 		C = self.MLP(C)
 		
 		# Get batch indexes for ligand-target combined features
-		C_batch = th.tensor(range(B)).unsqueeze(-1).unsqueeze(-1)
+		C_batch = th.tensor(range(B), device=C_mask.device).unsqueeze(-1).unsqueeze(-1)
 		C_batch = C_batch.repeat(1, N_l, N_p)[C_mask]
 			
 		# Outputs
