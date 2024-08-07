@@ -25,13 +25,19 @@ docker tag abtion/carsidock:v2 carsidock:v1
 
 ## Evaluate on PDBBind Core Set.
 ```shell
-docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_core_set_eval.py --cuda_convert
+docker run -v ./:/Docking --gpus all carsidock:v1 \
+  python /Docking/run_core_set_eval.py \
+  --cuda_convert
 ```
 
 ## Docking
 ```shell
 # redocking
-docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_docking_inference.py --pdb_file example_data/4YKQ_hsp90_40_water.pdb --sdf_file example_data/4YKQ_hsp90_40.sdf --cuda_convert
+docker run -v ./:/Docking --gpus all carsidock:v1 \
+  python /Docking/run_docking_inference.py \
+  --pdb_file example_data/4YKQ_hsp90_40_water.pdb \
+  --sdf_file example_data/4YKQ_hsp90_40.sdf \
+  --cuda_convert
 
 # docking for decoys
 docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_docking_inference.py --pdb_file example_data/4YKQ_hsp90_40_water.pdb --sdf_file example_data/4YKQ_hsp90_40.sdf --smiles_file example_data/smiles.txt --output_dir outputs/4ykq --cuda_convert
@@ -42,10 +48,22 @@ docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_docking_in
 The score table will be stored in the outputs/ace folder with score.dat as the file name. 
 ```shell
 # sdf decoys
-docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 python /Docking/run_screening.py --pdb_file example_data/ace_p.pdb --reflig example_data/ace_l.sdf --ligands example_data/ace_decoys.sdf --output_dir outputs/ace --cuda_convert
+docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 \
+  python /Docking/run_screening.py \
+  --pdb_file example_data/ace_p.pdb \
+  --reflig example_data/ace_l.sdf \
+  --ligands example_data/ace_decoys.sdf \
+  --output_dir outputs/ace \
+  --cuda_convert
 
 # smiles decoys
-docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 python /Docking/run_screening.py --pdb_file example_data/ace_p.pdb --reflig example_data/ace_l.sdf --ligands example_data/smiles.txt --output_dir outputs/ace --cuda_convert
+docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 \
+  python /Docking/run_screening.py \
+  --pdb_file example_data/ace_p.pdb \
+  --reflig example_data/ace_l.sdf \
+  --ligands example_data/smiles.txt \
+  --output_dir outputs/ace \
+  --cuda_convert
 ```
 
 
