@@ -40,7 +40,13 @@ docker run -v ./:/Docking --gpus all carsidock:v1 \
   --cuda_convert
 
 # docking for decoys
-docker run -v ./:/Docking --gpus all carsidock:v1 python /Docking/run_docking_inference.py --pdb_file example_data/4YKQ_hsp90_40_water.pdb --sdf_file example_data/4YKQ_hsp90_40.sdf --smiles_file example_data/smiles.txt --output_dir outputs/4ykq --cuda_convert
+docker run -v ./:/Docking --gpus all carsidock:v1 \
+  python /Docking/run_docking_inference.py \
+  --pdb_file example_data/4YKQ_hsp90_40_water.pdb \
+  --sdf_file example_data/4YKQ_hsp90_40.sdf \
+  --smiles_file example_data/smiles.txt \
+  --output_dir outputs/4ykq \
+  --cuda_convert
 # The docking conformation will be stored in the outputs/4ykq folder with ${inchi_key}.sdf as the file name.
 ```
 
