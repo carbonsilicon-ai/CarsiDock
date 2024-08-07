@@ -31,15 +31,20 @@ docker run -v ./:/Docking --gpus all carsidock:v1 \
 ```
 
 ## Docking
+
+**redocking**
+
 ```shell
-# redocking
 docker run -v ./:/Docking --gpus all carsidock:v1 \
   python /Docking/run_docking_inference.py \
   --pdb_file example_data/4YKQ_hsp90_40_water.pdb \
   --sdf_file example_data/4YKQ_hsp90_40.sdf \
   --cuda_convert
+```
 
-# docking for decoys
+**decoys docking**
+
+```shell
 docker run -v ./:/Docking --gpus all carsidock:v1 \
   python /Docking/run_docking_inference.py \
   --pdb_file example_data/4YKQ_hsp90_40_water.pdb \
@@ -47,13 +52,16 @@ docker run -v ./:/Docking --gpus all carsidock:v1 \
   --smiles_file example_data/smiles.txt \
   --output_dir outputs/4ykq \
   --cuda_convert
-# The docking conformation will be stored in the outputs/4ykq folder with ${inchi_key}.sdf as the file name.
 ```
+
+The docking conformation will be stored in the outputs/4ykq folder with ${inchi_key}.sdf as the file name.
 
 ## Screening
 The score table will be stored in the outputs/ace folder with score.dat as the file name. 
+
+**sdf decoys**
+
 ```shell
-# sdf decoys
 docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 \
   python /Docking/run_screening.py \
   --pdb_file example_data/ace_p.pdb \
@@ -61,8 +69,11 @@ docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 \
   --ligands example_data/ace_decoys.sdf \
   --output_dir outputs/ace \
   --cuda_convert
+```
 
-# smiles decoys
+**smiles decoys**
+
+```shell
 docker run -v ./:/Docking --gpus all --shm-size 16g carsidock:v1 \
   python /Docking/run_screening.py \
   --pdb_file example_data/ace_p.pdb \
