@@ -1,4 +1,7 @@
 # CarsiDock
+
+**A deep learning paradigm for accurate protein–ligand docking and screening based on large-scale pre-training**
+
 Official repo of CarsiDock proposed by CarbonSilicon AI.
 
 【[paper](https://pubs.rsc.org/en/content/articlelanding/2024/SC/D3SC05552C)】
